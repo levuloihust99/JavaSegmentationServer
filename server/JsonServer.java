@@ -23,13 +23,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import java.time.format.DateTimeFormatter;  
+import java.time.LocalDateTime;
+
 public class JsonServer {
     private static final String HOSTNAME = "0.0.0.0";
     private static final int PORT = 8088;
     private static final int BACKLOG = 1;
     private static final int POOL_SIZE = 100;
+    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
     public static void main(final String... args) throws IOException {
+        System.out.printf("Server is listening on port %d\n", PORT);
         ArrayList<RDRsegmenter> segmenterPool = new ArrayList<>();
         for (int i = 0; i < POOL_SIZE; i++) {
             segmenterPool.add(new RDRsegmenter());
@@ -37,6 +42,8 @@ public class JsonServer {
         Random rd = new Random();
         final HttpServer server = HttpServer.create(new InetSocketAddress(HOSTNAME, PORT), BACKLOG);
         server.createContext("/segment", he -> {
+            LocalDateTime now = LocalDateTime.now();
+            System.out.printf("Received request at %s\n", dtf.format(now));
             RDRsegmenter segmenter = segmenterPool.get(rd.nextInt(POOL_SIZE));
             RequestHandler handler = new RequestHandler(he, segmenter);
             new Thread(handler).start();
